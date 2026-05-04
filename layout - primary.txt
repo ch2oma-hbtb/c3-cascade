@@ -1,0 +1,28 @@
+ESP32C3 XIAO
+D10 - ROW 0
+ESC, 1, 2, 3, 4, 5
+D9 - ROW 1
+TAB, Q, W, E, R, T
+D8 - ROW 2
+Caps, A, S, D, F, G
+D7 - ROW 3
+Shift, Z, X, C, V
+D6 - ROW 4
+Ctrl, WIN/MAC Command, Alt, SPACE
+
+D0 - Column 0
+ESC, TAB, Caps, Shift, Ctrl
+D2 - Column 1
+1, Q, A, WIN/MAC Command
+D5 - Column 2
+2, W, S, Z, Alt
+D3 - Column 3
+3, E, D, X
+D4 - Column 4
+4, R, F, C, SPACE
+D1 - Column 5
+5, T, G, V
+
+Special keys (because there's no pin available left)
+Row D9 + Col D10: 6
+Row D8 + Col D7: B
