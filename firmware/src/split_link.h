@@ -1,9 +1,14 @@
 /**
  * @file split_link.h
- * @brief C3-Cascade — ESP-NOW split keyboard communication
+ * @brief C3-Cascade — Split keyboard wireless communication
  *
  * Handles wireless communication between master and slave halves
- * using ESP-NOW protocol.
+ * using either ESP-NOW or WiFi UDP transport (auto-selected per board).
+ *
+ * Features:
+ *   - Auto-discovery: slaves broadcast DISCOVER, master responds with ACK
+ *   - No hardcoded MAC addresses required
+ *   - Transport-agnostic API
  *
  * Master: receives matrix reports from slaves, sends heartbeats
  * Slave:  sends matrix reports to master, receives heartbeats
@@ -25,10 +30,13 @@ enum split_packet_type_t : uint8_t {
     SPLIT_PKT_HEARTBEAT     = 0x02,   // Master → Slave: alive signal
     SPLIT_PKT_SYNC          = 0x03,   // Master → Slave: sync command
     SPLIT_PKT_ACK           = 0x04,   // Acknowledgment
+    SPLIT_PKT_DISCOVER      = 0x10,   // Slave → Broadcast: "I'm a slave, pair me"
+    SPLIT_PKT_DISCOVER_ACK  = 0x11,   // Master → Slave: "Paired, your ID is X"
 };
 
 // ============================================================================
-// Packet structure (must fit in 250 bytes ESP-NOW limit)
+// Packet structure
+// Fits in ESP-NOW (250 byte limit) and UDP payload
 // ============================================================================
 
 typedef struct __attribute__((packed)) {
@@ -37,6 +45,7 @@ typedef struct __attribute__((packed)) {
     uint8_t             matrix[MATRIX_ROWS];    // Row bitfields
     uint32_t            timestamp;              // Sender's millis()
     uint8_t             battery_level;          // Battery % (0–100, or 0xFF if unknown)
+    uint8_t             mac[6];                 // Sender's MAC (used during discovery)
 } split_packet_t;
 
 // ============================================================================
@@ -49,21 +58,24 @@ typedef struct {
     uint32_t            last_seen;              // millis() of last packet
     uint8_t             battery_level;          // Last reported battery
     bool                connected;              // Is this slave active?
+    bool                discovered;             // Has this slave been discovered?
 } slave_info_t;
 
 // ============================================================================
-// Public API
+// Public API (transport-agnostic)
 // ============================================================================
 
 /**
- * @brief Initialize ESP-NOW for the configured role (master or slave)
+ * @brief Initialize the split link for the configured role and transport
+ * Master: starts listening for discovery broadcasts and matrix reports
+ * Slave:  begins discovery broadcast to find the master
  */
 void split_link_init();
 
 /**
  * @brief Process any pending received data (call in loop)
- * Master: checks for incoming slave reports
- * Slave: sends matrix report if state changed
+ * Master: checks for incoming slave reports and discovery requests
+ * Slave:  handles discovery responses and heartbeats
  */
 void split_link_update();
 
@@ -87,12 +99,19 @@ const matrix_state_t* split_link_get_slave_matrix(uint8_t slave_id);
 bool split_link_slave_connected(uint8_t slave_id);
 
 /**
- * @brief Get the number of configured slaves
+ * @brief Get the number of discovered/configured slaves
  */
 uint8_t split_link_slave_count();
 
 /**
- * @brief Shut down ESP-NOW (before deep sleep)
+ * @brief Check if discovery is complete
+ * @return true if at least one slave has been discovered (master)
+ *         or if the master has been found (slave)
+ */
+bool split_link_is_paired();
+
+/**
+ * @brief Shut down the split link (before deep sleep)
  */
 void split_link_shutdown();
 

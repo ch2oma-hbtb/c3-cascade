@@ -28,6 +28,8 @@
 
 #if defined(BOARD_XIAO_ESP32C3) || defined(BOARD_XIAO_ESP32C6)
 #include "hal/hal_esp32.h"
+#elif defined(BOARD_PICO2_W)
+#include "hal/hal_rp2040.h"
 #endif
 
 // ============================================================================
@@ -141,12 +143,13 @@ void setup() {
     #if IS_MASTER
     // ---- Master-specific initialization ----
 
-    // 4. Initialize Wi-Fi (STA mode for ESP-NOW)
-    #if HAS_ESPNOW
+    // 4. Initialize wireless for split link
+    #if SPLIT_TRANSPORT_ESPNOW && HAS_ESPNOW
     hal::esp32::wifi_init_sta();
     #endif
+    // WiFi UDP transport handles its own WiFi init inside split_link_init()
 
-    // 5. Initialize ESP-NOW split link
+    // 5. Initialize split link (auto-discovery)
     #if ENABLE_SPLIT_LINK
     split_link_init();
     #endif
@@ -157,23 +160,24 @@ void setup() {
     #endif
 
     DBG_PRINTLN(F("\n[MAIN] Master node ready!"));
-    DBG_PRINTLN(F("[MAIN] Scanning matrix & waiting for BLE connection..."));
+    DBG_PRINTLN(F("[MAIN] Auto-discovery active — waiting for slaves..."));
 
     #else
     // ---- Slave-specific initialization ----
 
-    // 4. Initialize Wi-Fi (STA mode for ESP-NOW)
-    #if HAS_ESPNOW
+    // 4. Initialize wireless for split link
+    #if SPLIT_TRANSPORT_ESPNOW && HAS_ESPNOW
     hal::esp32::wifi_init_sta();
     #endif
+    // WiFi UDP transport handles its own WiFi init inside split_link_init()
 
-    // 5. Initialize ESP-NOW split link
+    // 5. Initialize split link (auto-discovery)
     #if ENABLE_SPLIT_LINK
     split_link_init();
     #endif
 
     DBG_PRINTLN(F("\n[MAIN] Slave node ready!"));
-    DBG_PRINTLN(F("[MAIN] Scanning matrix & sending to master..."));
+    DBG_PRINTLN(F("[MAIN] Auto-discovery active — searching for master..."));
 
     #endif // IS_MASTER / IS_SLAVE
 
