@@ -1,0 +1,28 @@
+RP2040 (RPI PICO W)
+GP28 - ROW 0
+7, 8, 9, 0, -, =, Backspace
+GP21 - ROW 1
+Y, U, I, O, P, [, ], \
+GP20 - ROW 2
+H, J, K, L, ;, ', Enter
+GP19 - ROW 3
+N, M, Comma, Dot, /, Arrow Up, Shift
+GP18 - ROW 4
+Space, FN, Arrow Left, Arrow Down, Arrow Right
+
+GP4 - Column 0
+7, Y, H, N, Space
+GP3 - Column 1
+8, U, J, M
+GP2 - Column 2
+9, I, K, Comma
+GP1 - Column 3
+0, O, L, Dot, FN
+GP0 - Column 4
+-, P, ;, /, Arrow Left
+GP17 - Column 5
+=, [, ', Arrow Up, Arrow Down
+GP27 - Column 6
+]
+GP22 - Column 7
+Backspace, \, Enter, Shift, Array Right
