@@ -110,6 +110,35 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {
 // nRF52840 uses NRF_GPIO sense mechanism for wake — handled in HAL
 #define DEEPSLEEP_WAKEUP_PIN_MASK   0
 
+// ============================================================================
+// Raspberry Pi Pico 2W (RP2350)
+// ============================================================================
+#elif defined(BOARD_PICO2_W)
+
+// Pico 2W GPIO mapping
+// Available GPIOs: GP0-GP22, GP26-GP28 (GP23-GP25, GP29 used internally)
+// Using adjacent pins for easy PCB routing
+static const uint8_t ROW_PINS[MATRIX_ROWS] = {
+    2,      // ROW0 → GP2
+    3,      // ROW1 → GP3
+    4,      // ROW2 → GP4
+    5,      // ROW3 → GP5
+    6,      // ROW4 → GP6
+};
+
+static const uint8_t COL_PINS[MATRIX_COLS] = {
+    7,      // COL0 → GP7
+    8,      // COL1 → GP8
+    9,      // COL2 → GP9
+    10,     // COL3 → GP10
+    11,     // COL4 → GP11
+    12,     // COL5 → GP12
+    13,     // COL6 → GP13
+};
+
+// RP2040/RP2350 uses dormant mode — all GPIOs can trigger wake via IRQ
+#define DEEPSLEEP_WAKEUP_PIN_MASK   0
+
 #endif // Board selection
 
 #endif // C3CASCADE_PINS_H

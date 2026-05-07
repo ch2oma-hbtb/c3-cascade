@@ -20,6 +20,7 @@
 // ============================================================================
 // ESP32 (NimBLE) implementation
 // ============================================================================
+// Note: Pico 2W uses ble_hid_btstack.cpp instead
 #if HAS_NIMBLE
 
 #include <NimBLEDevice.h>

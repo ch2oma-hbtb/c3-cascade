@@ -1,0 +1,38 @@
+# KiCad
+*.bak
+*.bck
+*-bak
+*-cache.lib
+*-rescue.lib
+*-save.pro
+*-save.kicad_pcb
+fp-info-cache
+*-backups/
+*.kicad_prl
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.kicad_pro-bak
+_autosave-*
+
+# Gerbers (generated output)
+# Uncomment to exclude gerbers from version control:
+# gerber/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firmware build artifacts
+firmware/*/build/
+firmware/*/.pio/
+firmware/*/CMakeCache.txt
+firmware/*/CMakeFiles/
+firmware/**/*.o
+firmware/**/*.elf
+firmware/**/*.bin
+firmware/**/*.hex
+firmware/**/*.uf2
+
+# IDE
+.vscode/
+.idea/
