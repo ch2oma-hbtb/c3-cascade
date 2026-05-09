@@ -8,11 +8,12 @@
  * The arduino-pico core provides PicoBluetoothBLEHID which wraps
  * BTstack's HID-over-GATT (HOG) implementation.
  *
- * Note: This file is only compiled for BOARD_PICO2_W builds.
+ * Note: This file is only compiled for BTstack-capable boards (Pico 2W).
  * ESP32 boards use ble_hid.cpp (NimBLE) instead.
+ * Pico W uses WiFi-only mode until BTstack BLE HID is implemented.
  */
 
-#if defined(BOARD_PICO2_W)
+#if HAS_BTSTACK
 
 #include <Arduino.h>
 #include <string.h>
@@ -174,4 +175,4 @@ void ble_hid_set_battery_level(uint8_t level) {
     (void)level;
 }
 
-#endif // BOARD_PICO2_W
+#endif // HAS_BTSTACK

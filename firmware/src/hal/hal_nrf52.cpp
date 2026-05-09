@@ -125,6 +125,25 @@ void hal::system_reset() {
     NVIC_SystemReset();
 }
 
+void hal::led_init() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    #endif
+}
+
+void hal::led_on() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, HIGH);
+    #endif
+}
+
+void hal::led_off() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, LOW);
+    #endif
+}
+
 // ============================================================================
 // hal::nrf52:: specific functions
 // ============================================================================
@@ -145,7 +164,7 @@ void hal::nrf52::configure_sense_pins() {
     }
 
     // Configure column pins with INPUT_PULLUP and SENSE LOW
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         pinMode(COL_PINS[i], INPUT_PULLUP);
         // TODO: Configure NRF_GPIO SENSE for this pin
         // nrf_gpio_cfg_sense_input(COL_PINS[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);

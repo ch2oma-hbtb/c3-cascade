@@ -116,7 +116,7 @@ void hal::enter_deep_sleep(uint64_t wakeup_pin_mask) {
     // 2. Configure Columns for wakeup using low-level ESP-IDF API
     gpio_config_t conf;
     conf.pin_bit_mask = 0;
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         conf.pin_bit_mask |= (1ULL << COL_PINS[i]);
     }
     conf.mode = GPIO_MODE_INPUT;
@@ -126,7 +126,7 @@ void hal::enter_deep_sleep(uint64_t wakeup_pin_mask) {
     gpio_config(&conf);
 
     // 3. Enable wakeup for each column
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         gpio_wakeup_enable((gpio_num_t)COL_PINS[i], GPIO_INTR_LOW_LEVEL);
     }
     
@@ -181,6 +181,25 @@ void hal::system_reset() {
     ESP.restart();
 }
 
+void hal::led_init() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    #endif
+}
+
+void hal::led_on() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, HIGH);
+    #endif
+}
+
+void hal::led_off() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, LOW);
+    #endif
+}
+
 // ============================================================================
 // hal::esp32:: specific functions
 // ============================================================================
@@ -214,7 +233,7 @@ void hal::esp32::prepare_rows_for_sleep() {
     }
 
     // Ensure column pins are INPUT_PULLUP (they're the wake sources)
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         pinMode(COL_PINS[i], INPUT_PULLUP);
     }
 }

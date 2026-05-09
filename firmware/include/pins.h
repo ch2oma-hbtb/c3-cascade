@@ -35,7 +35,7 @@ static const uint8_t ROW_PINS[MATRIX_ROWS] = {
     21,     // ROW4 → D6  → GPIO21
 };
 
-static const uint8_t COL_PINS[MATRIX_COLS] = {
+static const uint8_t COL_PINS[NUM_PHYSICAL_COLS] = {
     2,      // COL0 → D0 → GPIO2
     4,      // COL1 → D2 → GPIO4
     7,      // COL2 → D5 → GPIO7
@@ -49,6 +49,8 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {
 #define DEEPSLEEP_WAKEUP_PIN_MASK   ( \
     (1ULL << 2) | (1ULL << 3) | (1ULL << 4) | (1ULL << 5) \
 )
+
+#define LED_PIN     0xFF     // No simple onboard LED (WS2812 on GPIO8)
 
 // ============================================================================
 // Seeed Studio XIAO ESP32-C6
@@ -67,7 +69,7 @@ static const uint8_t ROW_PINS[MATRIX_ROWS] = {
     16,     // ROW4 → D6  → GPIO16
 };
 
-static const uint8_t COL_PINS[MATRIX_COLS] = {
+static const uint8_t COL_PINS[NUM_PHYSICAL_COLS] = {
     0,      // COL0 → D0 → GPIO0
     2,      // COL1 → D2 → GPIO2
     23,     // COL2 → D5 → GPIO23
@@ -82,6 +84,8 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {
 #define DEEPSLEEP_WAKEUP_PIN_MASK   ( \
     (1ULL << 0) | (1ULL << 1) | (1ULL << 2) \
 )
+
+#define LED_PIN     0xFF     // No simple onboard LED (WS2812 on GPIO8)
 
 // ============================================================================
 // nRF52840 (placeholder — update for your actual PCB)
@@ -98,7 +102,7 @@ static const uint8_t ROW_PINS[MATRIX_ROWS] = {
     11,     // ROW4 → P0.11
 };
 
-static const uint8_t COL_PINS[MATRIX_COLS] = {
+static const uint8_t COL_PINS[NUM_PHYSICAL_COLS] = {
     13,     // COL0 → P0.13
     15,     // COL1 → P0.15
     17,     // COL2 → P0.17
@@ -109,6 +113,8 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {
 
 // nRF52840 uses NRF_GPIO sense mechanism for wake — handled in HAL
 #define DEEPSLEEP_WAKEUP_PIN_MASK   0
+
+#define LED_PIN     0xFF     // No onboard LED assigned
 
 // ============================================================================
 // Raspberry Pi Pico 2W (RP2350)
@@ -126,7 +132,7 @@ static const uint8_t ROW_PINS[MATRIX_ROWS] = {
     6,      // ROW4 → GP6
 };
 
-static const uint8_t COL_PINS[MATRIX_COLS] = {
+static const uint8_t COL_PINS[NUM_PHYSICAL_COLS] = {
     7,      // COL0 → GP7
     8,      // COL1 → GP8
     9,      // COL2 → GP9
@@ -138,6 +144,41 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {
 
 // RP2040/RP2350 uses dormant mode — all GPIOs can trigger wake via IRQ
 #define DEEPSLEEP_WAKEUP_PIN_MASK   0
+
+#define LED_PIN     LED_BUILTIN     // CYW43 onboard LED
+
+// ============================================================================
+// Raspberry Pi Pico W (RP2040 + CYW4343W)
+// ============================================================================
+#elif defined(BOARD_PICO_W)
+
+// Pico W GPIO mapping (from layout - slave.txt)
+// ROW pins: GP28, GP21, GP20, GP19, GP18
+// COL pins: GP4, GP3, GP2, GP1, GP0, GP17, GP27, GP22
+// Note: GP0/GP1 are shared with UART0 TX/RX — USB CDC is used for debug instead
+static const uint8_t ROW_PINS[MATRIX_ROWS] = {
+    28,     // ROW0 → GP28
+    21,     // ROW1 → GP21
+    20,     // ROW2 → GP20
+    19,     // ROW3 → GP19
+    18,     // ROW4 → GP18
+};
+
+static const uint8_t COL_PINS[NUM_PHYSICAL_COLS] = {
+    4,      // COL0 → GP4
+    3,      // COL1 → GP3
+    2,      // COL2 → GP2
+    1,      // COL3 → GP1
+    0,      // COL4 → GP0
+    17,     // COL5 → GP17
+    27,     // COL6 → GP27
+    22,     // COL7 → GP22
+};
+
+// RP2040 uses dormant mode — all GPIOs can trigger wake via IRQ
+#define DEEPSLEEP_WAKEUP_PIN_MASK   0
+
+#define LED_PIN     LED_BUILTIN     // CYW43 onboard LED
 
 #endif // Board selection
 

@@ -234,6 +234,32 @@ void ble_hid_set_battery_level(uint8_t level) {
     (void)level; // Suppress unused warning when disabled
 }
 
+void ble_hid_enter_pairing_mode() {
+    DBG_PRINTLN(F("[PAIR] Entering BLE pairing mode..."));
+
+    // Disconnect any connected clients
+    if (pServer != nullptr) {
+        int count = pServer->getConnectedCount();
+        for (int i = 0; i < count; i++) {
+            auto peerInfo = pServer->getPeerInfo(i);
+            uint16_t handle = peerInfo.getConnHandle();
+            if (handle != BLE_HS_CONN_HANDLE_NONE) {
+                pServer->disconnect(handle);
+            }
+        }
+    }
+
+    // Clear all bonded devices so a new host can pair
+    NimBLEDevice::deleteAllBonds();
+    DBG_PRINTLN(F("[PAIR] Cleared bonded devices"));
+
+    // Restart advertising
+    NimBLEDevice::stopAdvertising();
+    NimBLEDevice::startAdvertising();
+
+    DBG_PRINTLN(F("[PAIR] BLE pairing mode active — advertising for new host"));
+}
+
 // ============================================================================
 // nRF52840 implementation (skeleton)
 // ============================================================================
@@ -259,6 +285,38 @@ bool ble_hid_is_connected() {
 }
 
 void ble_hid_shutdown() {}
+
+void ble_hid_enter_pairing_mode() {
+    DBG_PRINTLN(F("[BLE] Pairing mode not supported on this board"));
+}
+
+void ble_hid_set_battery_level(uint8_t level) {
+    (void)level;
+}
+
+#elif !HAS_NIMBLE && !defined(BOARD_NRF52840) && !HAS_BTSTACK
+
+// Fallback stub for boards without BLE HID support
+void ble_hid_init() {
+    DBG_PRINTLN(F("[BLE] No BLE HID implementation for this board"));
+}
+
+bool ble_hid_send_report(const hid_keyboard_report_t* report) {
+    (void)report;
+    return false;
+}
+
+void ble_hid_release_all() {}
+
+bool ble_hid_is_connected() {
+    return false;
+}
+
+void ble_hid_shutdown() {}
+
+void ble_hid_enter_pairing_mode() {
+    DBG_PRINTLN(F("[BLE] Pairing mode not supported on this board"));
+}
 
 void ble_hid_set_battery_level(uint8_t level) {
     (void)level;

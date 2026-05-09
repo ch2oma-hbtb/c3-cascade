@@ -52,6 +52,12 @@ typedef struct __attribute__((packed)) {
 // Slave info (tracked by master)
 // ============================================================================
 
+enum split_transport_t : uint8_t {
+    TRANSPORT_NONE = 0,
+    TRANSPORT_ESPNOW = 1,
+    TRANSPORT_WIFI_UDP = 2
+};
+
 typedef struct {
     uint8_t             mac[6];                 // Slave MAC address
     matrix_state_t      matrix;                 // Last received matrix state
@@ -59,6 +65,8 @@ typedef struct {
     uint8_t             battery_level;          // Last reported battery
     bool                connected;              // Is this slave active?
     bool                discovered;             // Has this slave been discovered?
+    split_transport_t   transport;              // Which transport is this slave using
+    uint32_t            ip_address;             // (WiFi UDP only) IP address of slave
 } slave_info_t;
 
 // ============================================================================
@@ -114,5 +122,11 @@ bool split_link_is_paired();
  * @brief Shut down the split link (before deep sleep)
  */
 void split_link_shutdown();
+
+/**
+ * @brief Reset slave pairing state — clear all known slaves and
+ *        re-enable discovery. Master only.
+ */
+void split_link_reset_pairing();
 
 #endif // C3CASCADE_SPLIT_LINK_H

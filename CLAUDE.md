@@ -10,6 +10,9 @@ Wireless split keyboard with master/slave architecture.
   - nRF52840 XIAO (BLE 5, best wireless range)
 - **Communication**: Wireless (Bluetooth) between halves
 - **Topology**: Master/slave — one half runs as central, the other as peripheral
+- **Auto-discovery**: No hardcoded MAC addresses — slaves broadcast DISCOVER, master responds with ACK
+- **Pairing mode**: ESC+SPACE (5s) for BLE PC pairing, ESC+SHIFT (5s) for slave search; all keys suppressed except ESC/SHIFT/SPACE during pairing; 60s timeout
+- **LED status**: Pico W onboard LED blinks during pairing (master) or searching (slave), solid on when connected
 
 ## Project Structure
 
@@ -20,9 +23,13 @@ hardware/
     fusion360_right_half.py
   lib/              # Shared footprint & 3D model libraries
     keyswitch-kicad-library/
-firmware/           # Keyboard firmware (TBD)
+firmware/           # Keyboard firmware
+  include/          # config.h, pins.h, keymap.h, hal/*.h
+  src/              # main.cpp, matrix, ble_hid, split_link, power, hal/
 gerber/             # Generated gerber output
 docs/               # Design documentation
+  pairing-guide.md  # BLE and split link pairing procedures
+  firmware_guide.md # Comprehensive firmware documentation
 ```
 
 ## Key Design Decisions

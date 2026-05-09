@@ -13,7 +13,7 @@
  *   - MAC address read from CYW43439 chip
  */
 
-#if defined(BOARD_PICO2_W)
+#if defined(BOARD_PICO2_W) || defined(BOARD_PICO_W)
 
 #include "config.h"
 #include "pins.h"
@@ -123,7 +123,7 @@ void hal::enter_deep_sleep(uint64_t wakeup_pin_mask) {
     // then enter dormant mode. On wake, the chip resets.
 
     // Set up column pins as wake sources
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         pinMode(COL_PINS[i], INPUT_PULLUP);
     }
 
@@ -139,7 +139,7 @@ void hal::enter_deep_sleep(uint64_t wakeup_pin_mask) {
     //
     // Set up GPIO interrupt on any column pin going LOW
     // When triggered, it will cause a reboot via watchdog
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         attachInterrupt(digitalPinToInterrupt(COL_PINS[i]), [](){
             // Any key press triggers a watchdog reset
             watchdog_reboot(0, 0, 0);
@@ -174,7 +174,30 @@ void hal::get_mac_address(uint8_t mac[6]) {
 }
 
 void hal::system_reset() {
-    rp2040.reboot();
+    watchdog_reboot(0, 0, 0);
+}
+
+void hal::led_init() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    // Pico W LED is on CYW43 WL GPIO — pinMode/digitalWrite route
+    // through the CYW43 driver automatically. LED won't respond until
+    // WiFi is initialized (split_link_init), but setting mode here
+    // is harmless.
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    #endif
+}
+
+void hal::led_on() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, HIGH);
+    #endif
+}
+
+void hal::led_off() {
+    #if ENABLE_LED && LED_PIN != 0xFF
+    digitalWrite(LED_PIN, LOW);
+    #endif
 }
 
 // ============================================================================
@@ -201,11 +224,11 @@ void hal::rp2040::prepare_rows_for_sleep() {
     }
 
     // Ensure column pins are INPUT_PULLUP
-    for (int i = 0; i < MATRIX_COLS; i++) {
+    for (int i = 0; i < NUM_PHYSICAL_COLS; i++) {
         pinMode(COL_PINS[i], INPUT_PULLUP);
     }
 
     DBG_PRINTLN(F("[HAL] RP2350 row pins prepared for sleep"));
 }
 
-#endif // BOARD_PICO2_W
+#endif // BOARD_PICO2_W || BOARD_PICO_W

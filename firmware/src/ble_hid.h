@@ -61,4 +61,10 @@ void ble_hid_shutdown();
  */
 void ble_hid_set_battery_level(uint8_t level);
 
+/**
+ * @brief Enter BLE pairing mode — clear bonds and restart advertising
+ *        so a new host can discover and pair.
+ */
+void ble_hid_enter_pairing_mode();
+
 #endif // C3CASCADE_BLE_HID_H

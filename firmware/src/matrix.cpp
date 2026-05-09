@@ -40,12 +40,15 @@ static uint8_t pending_state[MATRIX_ROWS][MATRIX_COLS];
 static uint32_t last_activity_time;
 
 static void restore_row_outputs_high() {
+#if HAS_VIRTUAL_COL
     for (int i = 0; i < MATRIX_ROWS; i++) {
         hal::gpio_set_mode(ROW_PINS[i], hal::PIN_OUTPUT);
         hal::gpio_write(ROW_PINS[i], 1);
     }
+#endif
 }
 
+#if HAS_VIRTUAL_COL
 static bool read_row_to_row_key(int drive_row, int sense_row) {
     for (int i = 0; i < MATRIX_ROWS; i++) {
         hal::gpio_set_highz(ROW_PINS[i]);
@@ -60,6 +63,7 @@ static bool read_row_to_row_key(int drive_row, int sense_row) {
     restore_row_outputs_high();
     return pressed;
 }
+#endif
 
 // ============================================================================
 // Initialization
@@ -72,8 +76,8 @@ void matrix_init() {
         hal::gpio_write(ROW_PINS[r], 1);  // HIGH = inactive
     }
 
-    // Configure physical column pins as INPUT_PULLUP (Columns 0-5)
-    for (int c = 0; c < 6; c++) {
+    // Configure physical column pins as INPUT_PULLUP
+    for (int c = 0; c < NUM_PHYSICAL_COLS; c++) {
         hal::gpio_set_mode(COL_PINS[c], hal::PIN_INPUT_PULLUP);
     }
 
@@ -106,10 +110,9 @@ static void matrix_read_raw() {
         // Small delay for signal to settle (especially with longer traces)
         hal::delay_us(5);
 
-        // Read all columns
+        // Read all physical columns
         uint8_t row_bits = 0;
-        // Standard Columns (0-5)
-        for (int c = 0; c < 6; c++) {
+        for (int c = 0; c < NUM_PHYSICAL_COLS; c++) {
             if (hal::gpio_read(COL_PINS[c]) == 0) {
                 row_bits |= (1 << c);
             }
@@ -119,15 +122,17 @@ static void matrix_read_raw() {
         hal::gpio_write(ROW_PINS[r], 1); // Deactivate
     }
 
+#if HAS_VIRTUAL_COL
     // Extra scan phase: these keys are wired between row pins, so we treat
-    // them as a virtual COL6 by temporarily using one row as an input.
+    // them as a virtual column by temporarily using one row as an input.
     if (read_row_to_row_key(1, 0) || read_row_to_row_key(0, 1)) {
-        raw_state.rows[1] |= (1 << 6);
+        raw_state.rows[1] |= (1 << VIRTUAL_COL_INDEX);
     }
 
     if (read_row_to_row_key(2, 3) || read_row_to_row_key(3, 2)) {
-        raw_state.rows[2] |= (1 << 6);
+        raw_state.rows[2] |= (1 << VIRTUAL_COL_INDEX);
     }
+#endif
 }
 
 /**

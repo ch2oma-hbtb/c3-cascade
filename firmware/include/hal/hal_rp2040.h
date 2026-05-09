@@ -9,7 +9,7 @@
 #ifndef C3CASCADE_HAL_RP2040_H
 #define C3CASCADE_HAL_RP2040_H
 
-#if defined(BOARD_PICO2_W)
+#if defined(BOARD_PICO2_W) || defined(BOARD_PICO_W)
 
 #include "hal.h"
 
@@ -41,5 +41,5 @@ void prepare_rows_for_sleep();
 } // namespace rp2040
 } // namespace hal
 
-#endif // BOARD_PICO2_W
+#endif // BOARD_PICO2_W || BOARD_PICO_W
 #endif // C3CASCADE_HAL_RP2040_H

@@ -25,7 +25,7 @@
 #if defined(BOARD_XIAO_ESP32C3) || defined(BOARD_XIAO_ESP32C6)
 RTC_DATA_ATTR static uint32_t boot_count = 0;
 RTC_DATA_ATTR static bool was_sleeping = false;
-#elif defined(BOARD_PICO2_W)
+#elif defined(BOARD_PICO2_W) || defined(BOARD_PICO_W)
 // RP2040/RP2350 has no RTC-persistent memory — use regular statics
 // Wake detection uses watchdog scratch registers (see hal_rp2040.cpp)
 static uint32_t boot_count = 0;

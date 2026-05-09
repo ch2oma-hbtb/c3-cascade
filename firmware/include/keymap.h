@@ -7,16 +7,21 @@
  *
  * Layout (primary / left half):
  *
- *         COL0    COL1    COL2    COL3    COL4    COL5
- * ROW0    ESC     1       2       3       4       5
- * ROW1    TAB     Q       W       E       R       T
- * ROW2    CAPS    A       S       D       F       G
- * ROW3    LSHIFT  Z       X       C       V       B  (*)
- * ROW4    LCTRL   LGUI    LALT    ---     SPACE   ---
+ *         COL0    COL1    COL2    COL3    COL4    COL5    COL6    COL7
+ * ROW0    ESC     1       2       3       4       5       ---     ---
+ * ROW1    TAB     Q       W       E       R       T       6       ---
+ * ROW2    CAPS    A       S       D       F       G       B       ---
+ * ROW3    LSHIFT  ---     Z       X       C       V       ---     ---
+ * ROW4    LCTRL   LGUI    LALT    ---     SPACE   ---     ---     ---
  *
- * (*) ROW3/COL5 = B (the layout shows "V, B" — V is at COL4, B at COL5)
- *     ROW0/COL5 = 5 (the layout shows "5, 6" — we map 5 here; 6 belongs to
- *                     the right half or an extra column)
+ * Layout (secondary / right half, from layout - slave.txt):
+ *
+ *         COL0    COL1    COL2    COL3    COL4    COL5    COL6    COL7
+ * ROW0    7       8       9       0       -       =       ---     BS
+ * ROW1    Y       U       I       O       P       [       ]       \
+ * ROW2    H       J       K       L       ;       '       ---     Enter
+ * ROW3    N       M       ,       .       /       Up      ---     RShift
+ * ROW4    Space   ---     ---     FN      Left    Down    ---     Right
  */
 
 #ifndef C3CASCADE_KEYMAP_H
@@ -70,10 +75,31 @@
 #define HID_KEY_0               0x27
 
 // Special keys
+#define HID_KEY_ENTER           0x28
 #define HID_KEY_ESC             0x29
+#define HID_KEY_BACKSPACE       0x2A
 #define HID_KEY_TAB             0x2B
-#define HID_KEY_CAPS_LOCK       0x39
 #define HID_KEY_SPACE           0x2C
+#define HID_KEY_MINUS           0x2D    // - (minus/underscore)
+#define HID_KEY_EQUAL           0x2E    // = (equal/plus)
+#define HID_KEY_LEFT_BRACKET    0x2F    // [ (left bracket)
+#define HID_KEY_RIGHT_BRACKET   0x30    // ] (right bracket)
+#define HID_KEY_BACKSLASH       0x31    // \ (backslash/pipe)
+#define HID_KEY_SEMICOLON       0x33    // ; (semicolon/colon)
+#define HID_KEY_APOSTROPHE      0x34    // ' (apostrophe/quote)
+#define HID_KEY_COMMA           0x36    // , (comma/less than)
+#define HID_KEY_PERIOD          0x37    // . (period/greater than)
+#define HID_KEY_SLASH           0x38    // / (slash/question mark)
+#define HID_KEY_CAPS_LOCK       0x39
+
+// Navigation keys
+#define HID_KEY_RIGHT_ARROW     0x4F
+#define HID_KEY_LEFT_ARROW      0x50
+#define HID_KEY_DOWN_ARROW      0x51
+#define HID_KEY_UP_ARROW        0x52
+
+// FN layer key (custom marker — no HID output, triggers layer 1)
+#define HID_KEY_FN              0xF1
 
 // No key assigned
 #define HID_KEY_NONE            0x00
@@ -100,12 +126,12 @@
 // ============================================================================
 
 static const uint16_t KEYMAP_LAYER_0_PRIMARY[MATRIX_ROWS][MATRIX_COLS] = {
-    //  COL0 (D0)           COL1 (D2)       COL2 (D5)       COL3 (D3)       COL4 (D4)       COL5 (D1)       COL6 (X-Wire)
-    { HID_KEY_ESC,        HID_KEY_1,      HID_KEY_2,      HID_KEY_3,      HID_KEY_4,      HID_KEY_5,      HID_KEY_NONE    },  // ROW0 (D10)
-    { HID_KEY_TAB,        HID_KEY_Q,      HID_KEY_W,      HID_KEY_E,      HID_KEY_R,      HID_KEY_T,      HID_KEY_6       },  // ROW1 (D9)
-    { HID_KEY_CAPS_LOCK,  HID_KEY_A,      HID_KEY_S,      HID_KEY_D,      HID_KEY_F,      HID_KEY_G,      HID_KEY_B       },  // ROW2 (D8)
-    { MOD_KEY(HID_MOD_LSHIFT), HID_KEY_NONE, HID_KEY_Z,      HID_KEY_X,      HID_KEY_C,      HID_KEY_V,      HID_KEY_NONE    },  // ROW3 (D7)
-    { MOD_KEY(HID_MOD_LCTRL),  MOD_KEY(HID_MOD_LGUI), MOD_KEY(HID_MOD_LALT), HID_KEY_NONE, HID_KEY_SPACE, HID_KEY_NONE, HID_KEY_NONE },  // ROW4 (D6)
+    //  COL0 (D0)           COL1 (D2)       COL2 (D5)       COL3 (D3)       COL4 (D4)       COL5 (D1)       COL6 (X-Wire)   COL7 (pad)
+    { HID_KEY_ESC,        HID_KEY_1,      HID_KEY_2,      HID_KEY_3,      HID_KEY_4,      HID_KEY_5,      HID_KEY_NONE,   HID_KEY_NONE    },  // ROW0 (D10)
+    { HID_KEY_TAB,        HID_KEY_Q,      HID_KEY_W,      HID_KEY_E,      HID_KEY_R,      HID_KEY_T,      HID_KEY_6,      HID_KEY_NONE    },  // ROW1 (D9)
+    { HID_KEY_CAPS_LOCK,  HID_KEY_A,      HID_KEY_S,      HID_KEY_D,      HID_KEY_F,      HID_KEY_G,      HID_KEY_B,      HID_KEY_NONE    },  // ROW2 (D8)
+    { MOD_KEY(HID_MOD_LSHIFT), HID_KEY_NONE, HID_KEY_Z,   HID_KEY_X,      HID_KEY_C,      HID_KEY_V,      HID_KEY_NONE,   HID_KEY_NONE    },  // ROW3 (D7)
+    { MOD_KEY(HID_MOD_LCTRL),  MOD_KEY(HID_MOD_LGUI), MOD_KEY(HID_MOD_LALT), HID_KEY_NONE, HID_KEY_SPACE, HID_KEY_NONE, HID_KEY_NONE, HID_KEY_NONE },  // ROW4 (D6)
 };
 
 // ============================================================================
@@ -113,12 +139,12 @@ static const uint16_t KEYMAP_LAYER_0_PRIMARY[MATRIX_ROWS][MATRIX_COLS] = {
 // ============================================================================
 
 static const uint16_t KEYMAP_LAYER_0_SECONDARY[MATRIX_ROWS][MATRIX_COLS] = {
-    //  COL0                COL1            COL2            COL3            COL4            COL5            COL6
-    { HID_KEY_7,          HID_KEY_8,      HID_KEY_9,      HID_KEY_0,      HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE    },  // ROW0
-    { HID_KEY_Y,          HID_KEY_U,      HID_KEY_I,      HID_KEY_O,      HID_KEY_P,      HID_KEY_NONE,   HID_KEY_NONE    },  // ROW1
-    { HID_KEY_H,          HID_KEY_J,      HID_KEY_K,      HID_KEY_L,      HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE    },  // ROW2
-    { HID_KEY_N,          HID_KEY_M,      HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE,   MOD_KEY(HID_MOD_RSHIFT), HID_KEY_NONE }, // ROW3
-    { HID_KEY_NONE,       HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_NONE    },  // ROW4
+    //  COL0                COL1            COL2            COL3            COL4            COL5            COL6            COL7
+    { HID_KEY_7,          HID_KEY_8,      HID_KEY_9,      HID_KEY_0,      HID_KEY_MINUS,  HID_KEY_EQUAL,  HID_KEY_NONE,   HID_KEY_BACKSPACE   },  // ROW0
+    { HID_KEY_Y,          HID_KEY_U,      HID_KEY_I,      HID_KEY_O,      HID_KEY_P,      HID_KEY_LEFT_BRACKET, HID_KEY_RIGHT_BRACKET, HID_KEY_BACKSLASH },  // ROW1
+    { HID_KEY_H,          HID_KEY_J,      HID_KEY_K,      HID_KEY_L,      HID_KEY_SEMICOLON, HID_KEY_APOSTROPHE, HID_KEY_NONE,  HID_KEY_ENTER      },  // ROW2
+    { HID_KEY_N,          HID_KEY_M,      HID_KEY_COMMA,  HID_KEY_PERIOD,  HID_KEY_SLASH,  HID_KEY_UP_ARROW, HID_KEY_NONE,   MOD_KEY(HID_MOD_RSHIFT) },  // ROW3
+    { HID_KEY_SPACE,      HID_KEY_NONE,   HID_KEY_NONE,   HID_KEY_FN,     HID_KEY_LEFT_ARROW, HID_KEY_DOWN_ARROW, HID_KEY_NONE, HID_KEY_RIGHT_ARROW },  // ROW4
 };
 
 // ============================================================================

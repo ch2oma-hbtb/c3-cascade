@@ -32,8 +32,10 @@
 | Feature | Description |
 |---------|-------------|
 | **Wireless BLE HID** | Connects to PC/Mac/mobile as a standard Bluetooth keyboard |
-| **Split keyboard** | Left (master) + right (slave) halves communicate wirelessly |
-| **ESP-NOW** | Ultra-low-latency inter-half communication (~1ms) |
+| **Unified Split Link** | ESP-NOW and WiFi UDP communication with auto-discovery |
+| **Dual Mode Master** | Master can accept ESP-NOW and WiFi UDP slaves simultaneously |
+| **ESP-NOW** | Ultra-low-latency inter-half communication (~1ms) for ESP32 |
+| **WiFi UDP** | Cross-platform communication support (Pico W / cross-board) |
 | **Deep sleep** | Auto-sleeps after 60s idle; wakes on any keypress |
 | **Multi-MCU** | Supports ESP32-C3, ESP32-C6, nRF52840 via HAL abstraction |
 | **6KRO** | Standard 6-key rollover + modifier keys |
@@ -59,7 +61,7 @@ c3-cascade/
 │   │   ├── main.cpp              # Entry point (setup/loop)
 │   │   ├── matrix.cpp/.h         # Key matrix scanner with debounce
 │   │   ├── ble_hid.cpp/.h        # BLE HID keyboard service
-│   │   ├── split_link.cpp/.h     # ESP-NOW master↔slave protocol
+│   │   ├── split_link.cpp/.h     # Unified split link (ESP-NOW + WiFi UDP)
 │   │   ├── power.cpp/.h          # Deep sleep & idle management
 │   │   └── hal/
 │   │       ├── hal_esp32.cpp     # ESP32-C3/C6 HAL implementation
@@ -77,7 +79,7 @@ graph TB
         MAIN[main.cpp<br/>Loop Orchestrator]
         MATRIX[matrix.cpp<br/>Key Scanner]
         BLE[ble_hid.cpp<br/>BLE HID Service]
-        ESPNOW_M[split_link.cpp<br/>ESP-NOW Receiver]
+        SPLIT[split_link.cpp<br/>Unified Receiver]
         POWER[power.cpp<br/>Sleep Manager]
         HAL[HAL Layer<br/>GPIO / Timing / Sleep]
     end
@@ -85,7 +87,7 @@ graph TB
     subgraph "Slave Node (Right Half)"
         MAIN_S[main.cpp<br/>Slave Loop]
         MATRIX_S[matrix.cpp<br/>Key Scanner]
-        ESPNOW_S[split_link.cpp<br/>ESP-NOW Sender]
+        SPLIT_S[split_link.cpp<br/>Unified Sender]
         HAL_S[HAL Layer]
     end
 
@@ -139,7 +141,7 @@ sequenceDiagram
     end
 
     loop Every 1000ms
-        Master->>Slave: ESP-NOW: heartbeat
+        Master->>Slave: Heartbeat
     end
 
     Note over Master: 60s idle → deep sleep
@@ -331,6 +333,7 @@ Set by build flags in `platformio.ini`:
 #define ENABLE_DEEPSLEEP        1   // Auto deep sleep
 #define ENABLE_BATTERY_REPORT   0   // BLE battery level (future)
 #define ENABLE_RGB              0   // RGB LEDs (future)
+#define ENABLE_LED              1   // Onboard LED for status indication
 ```
 
 ### Timing
@@ -340,26 +343,21 @@ Set by build flags in `platformio.ini`:
 #define DEBOUNCE_MS             5       // Key debounce time
 #define DEEPSLEEP_TIMEOUT_MS    60000   // 60s idle → sleep
 #define HID_REPORT_INTERVAL_MS  8       // ~125Hz report rate
+#define PAIRING_SHORTCUT_HOLD_MS    5000    // Hold time for pairing shortcuts
+#define PAIRING_MODE_TIMEOUT_MS    60000   // Auto-exit pairing mode after 60s
+#define LED_BLINK_INTERVAL_MS      300     // LED toggle interval during pairing
 ```
 
-### MAC Address Pairing
+### Split Link Auto-Discovery
 
-Before using the split link, you need each board's MAC address:
+The split link uses automatic discovery — no hardcoded MAC addresses needed:
 
-1. Flash the firmware to each board
-2. Open Serial Monitor (115200 baud)
-3. Note the MAC address printed at boot: `[HAL] MAC Address: AA:BB:CC:DD:EE:FF`
-4. Update `config.h`:
+- **Master** boots and listens for slave discovery broadcasts
+- **Slave** boots and broadcasts DISCOVER packets every 500ms
+- When the master receives a DISCOVER, it registers the slave and replies with DISCOVER_ACK
+- The slave never gives up — if no master is found, it keeps scanning (ESP-NOW: broadcasts every 500ms; WiFi UDP: scans for the AP every 5 seconds)
 
-```cpp
-// On the SLAVE firmware, set the master's MAC:
-#define MASTER_MAC  {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF}
-
-// On the MASTER firmware, set the slave's MAC:
-#define SLAVE_MAC_1 {0x11, 0x22, 0x33, 0x44, 0x55, 0x66}
-```
-
-5. Rebuild and reflash both halves
+See [Pairing Guide](pairing-guide.md) for keyboard shortcut triggers and detailed pairing procedures.
 
 ---
 
@@ -409,18 +407,59 @@ When the keyboard wakes from deep sleep:
 3. If the host has bonded, it reconnects automatically (~1-3 seconds)
 4. No re-pairing needed
 
+### Pairing Mode
+
+When entering BLE PC pairing mode (ESC + SPACE for 5 seconds), the keyboard enters a special state:
+
+- **All keys are suppressed except ESC, SHIFT, and SPACE** — the keys needed for pairing shortcuts
+- The onboard LED blinks (Pico W only) to indicate pairing mode is active
+- Pairing mode exits automatically when:
+  - A BLE host connects, **or**
+  - 60 seconds elapse (timeout)
+- Deep sleep is inhibited during pairing mode
+
+When entering slave search mode (ESC + SHIFT for 5 seconds), the same key suppression and LED behavior applies. The mode exits when a slave connects or after 60 seconds.
+
+See [Pairing Guide](pairing-guide.md) for full details.
+
 ---
 
-## ESP-NOW Split Protocol
+## Split Link Protocol
 
 ### Overview
 
-ESP-NOW is a connectionless, low-latency protocol that operates on the 2.4 GHz radio without needing a Wi-Fi access point. It's ideal for keyboard communication:
+The split link provides wireless communication between keyboard halves using either ESP-NOW or WiFi UDP, depending on the board:
 
+| Board | Role | Transport Support |
+|-------|------|-------------------|
+| ESP32-C3/C6 | Master | **Dual Mode** (ESP-NOW + WiFi UDP) |
+| ESP32-C3/C6 | Slave | ESP-NOW |
+| Pico 2W | Master | WiFi UDP |
+| Pico 2W | Slave | WiFi UDP |
+| nRF52840 | — | None (stub) |
+
+**ESP-NOW** (ESP32 only):
 - **Latency:** ~1ms
 - **Max packet size:** 250 bytes
 - **Range:** ~30m (line of sight)
-- **Encryption:** Optional (disabled by default)
+- **No Wi-Fi AP needed** — direct peer-to-peer
+
+**WiFi UDP** (Pico W, or any master):
+- Master creates a SoftAP with SSID "C3C-XXXX" (last 4 hex of MAC)
+- Slave scans for the AP and connects
+- Discovery via UDP broadcast on port 4200
+- Works across platforms (ESP32 ↔ Pico W)
+
+### Auto-Discovery Flow
+
+Both transports use the same DISCOVER/DISCOVER_ACK handshake — no hardcoded MAC addresses needed:
+
+1. **Master** boots → starts listening for DISCOVER packets
+2. **Slave** boots → broadcasts DISCOVER packets every 500ms
+3. **Master** receives DISCOVER → registers slave → replies with DISCOVER_ACK (includes assigned ID)
+4. **Slave** receives ACK → paired, begins sending MATRIX_REPORT via unicast
+
+The slave **never gives up** — if no master is found, it keeps scanning indefinitely. Power the halves on in any order.
 
 ### Packet Format
 
@@ -450,11 +489,12 @@ sequenceDiagram
     participant S as Slave
     participant M as Master
 
-    Note over S,M: Initial Setup
-    S->>S: esp_now_init()
-    M->>M: esp_now_init()
-    S->>S: Add master as peer
-    M->>M: Add slave(s) as peer
+    Note over S,M: Auto-Discovery
+    S->>S: Boot → broadcast DISCOVER every 500ms
+    M->>M: Boot → listen for DISCOVER
+    S->>M: DISCOVER {MAC}
+    M->>S: DISCOVER_ACK {slave_id, master_MAC}
+    Note over S: LED solid on — paired
 
     Note over S,M: Normal Operation
     loop Slave scan loop (1kHz)
@@ -533,6 +573,14 @@ Edit `config.h`:
 #define DEEPSLEEP_TIMEOUT_MS    300000  // 5 minutes
 ```
 
+### Sleep Inhibition
+
+Deep sleep is **inhibited** during:
+- **Master:** BLE PC pairing mode or slave search mode (ESC+SPACE or ESC+SHIFT held for 5s)
+- **Slave:** While searching for a master (`!split_link_is_paired()`)
+
+This prevents the keyboard from going to sleep while waiting for a connection.
+
 ---
 
 ## Adding a Slave Half
@@ -556,18 +604,13 @@ Edit `config.h`:
    };
    ```
 
-3. **Get the slave's MAC address:**
-   - Flash with `xiao_esp32c3_slave` environment
-   - Read MAC from serial output
+3. **Flash both halves** with the appropriate environments:
+   - Master: `pio run -e xiao_esp32c3 -t upload`
+   - Slave: `pio run -e xiao_esp32c3_slave -t upload`
 
-4. **Update MAC addresses** in `config.h`:
-   ```cpp
-   #define SLAVE_MAC_1  {0x..., 0x..., 0x..., 0x..., 0x..., 0x...}
-   ```
+4. **Power on both halves** — they will auto-discover each other. No MAC address configuration needed.
 
-5. **Update the master's main.cpp** to use the secondary keymap when resolving slave matrix keys.
-
-6. **Rebuild and flash** both halves.
+See [Pairing Guide](pairing-guide.md) for manual re-pairing procedures.
 
 ---
 
@@ -670,9 +713,20 @@ MOD_KEY(HID_MOD_LGUI)     // Left GUI (Win/Cmd)
 
 | Problem | Solution |
 |---------|----------|
-| Slave not detected | Verify MAC addresses in config.h |
+| Slave not detected | Power on both halves; slave auto-discovers master |
 | Packets dropping | Ensure same Wi-Fi channel; check antenna |
 | High latency | Reduce scan interval; check for radio contention |
+
+### LED Status (Pico W / Pico 2W)
+
+| LED State | Meaning |
+|-----------|---------|
+| Blinking (master) | In BLE PC pairing mode or slave search mode |
+| Blinking (slave) | Searching for master — not yet paired |
+| Solid on (slave) | Connected to master — paired successfully |
+| Off | Normal operation (master) or not applicable |
+
+On XIAO ESP32 boards, no onboard LED is available (WS2812 RGB LED requires special library). Use serial debug output instead.
 
 ### Deep Sleep Issues
 
@@ -706,4 +760,4 @@ This firmware is provided as-is for personal use. Modify freely for your keyboar
 
 ---
 
-*C3-Cascade Firmware Guide — Last updated: April 2026*
+*C3-Cascade Firmware Guide — Last updated: May 2026*

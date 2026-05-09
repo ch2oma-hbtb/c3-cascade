@@ -14,6 +14,11 @@
 // ============================================================================
 // Board type detection (set by platformio.ini build_flags)
 // ============================================================================
+// Undefine BOARD_NAME if set by the platform (we use our own names)
+#ifdef BOARD_NAME
+    #undef BOARD_NAME
+#endif
+
 #if defined(BOARD_XIAO_ESP32C3)
     #define BOARD_NAME          "XIAO ESP32-C3"
     #define HAS_ESPNOW          1
@@ -38,6 +43,13 @@
     #define HAS_WIFI             1
     #define HAS_ADAFRUIT_BLE     0
     #define HAS_BTSTACK          1
+#elif defined(BOARD_PICO_W)
+    #define BOARD_NAME          "Pico W (RP2040)"
+    #define HAS_ESPNOW          0
+    #define HAS_NIMBLE           0
+    #define HAS_WIFI             1
+    #define HAS_ADAFRUIT_BLE     0
+    #define HAS_BTSTACK          0
 #else
     #error "No board type defined! Add -DBOARD_xxx to build_flags."
 #endif
@@ -47,6 +59,9 @@
 // ============================================================================
 #if defined(FORCE_WIFI_UDP)
     #define SPLIT_TRANSPORT_ESPNOW   0
+    #define SPLIT_TRANSPORT_WIFI_UDP 1
+#elif defined(SPLIT_ROLE_MASTER) && HAS_ESPNOW && HAS_WIFI
+    #define SPLIT_TRANSPORT_ESPNOW   1
     #define SPLIT_TRANSPORT_WIFI_UDP 1
 #elif HAS_ESPNOW
     #define SPLIT_TRANSPORT_ESPNOW   1
@@ -82,13 +97,35 @@
 #define ENABLE_DEEPSLEEP        1       // Deep sleep power management
 #define ENABLE_BATTERY_REPORT   0       // BLE battery level reporting (future)
 #define ENABLE_RGB              0       // RGB LED support (future)
+#define ENABLE_LED              1       // Onboard LED for status indication
 
 // ============================================================================
 // Matrix dimensions
 // ============================================================================
 #define MATRIX_ROWS             5       // ROW0–ROW4
-#define MATRIX_COLS             7       // COL0–COL6
+#define MATRIX_COLS             8       // COL0–COL7 (max across all halves)
 #define MAX_KEYS                (MATRIX_ROWS * MATRIX_COLS)
+
+// ============================================================================
+// Per-board physical column count and virtual column configuration
+// ============================================================================
+#if defined(BOARD_XIAO_ESP32C3) || defined(BOARD_XIAO_ESP32C6)
+    #define NUM_PHYSICAL_COLS   6       // 6 real GPIO column pins
+    #define HAS_VIRTUAL_COL     1       // COL6 is row-to-row wired
+    #define VIRTUAL_COL_INDEX   6       // Bit position of the virtual column
+#elif defined(BOARD_PICO2_W)
+    #define NUM_PHYSICAL_COLS   7       // 7 real GPIO column pins
+    #define HAS_VIRTUAL_COL     0
+#elif defined(BOARD_PICO_W)
+    #define NUM_PHYSICAL_COLS   8       // 8 real GPIO column pins
+    #define HAS_VIRTUAL_COL     0
+#elif defined(BOARD_NRF52840)
+    #define NUM_PHYSICAL_COLS   6
+    #define HAS_VIRTUAL_COL     1
+    #define VIRTUAL_COL_INDEX   6
+#else
+    #error "Define NUM_PHYSICAL_COLS and HAS_VIRTUAL_COL for this board"
+#endif
 
 // ============================================================================
 // Timing constants
@@ -112,12 +149,20 @@
 
 // Auto-discovery
 #define SPLIT_DISCOVER_INTERVAL_MS  500     // Slave broadcasts discover every 500ms
-#define SPLIT_DISCOVER_TIMEOUT_MS   15000   // Give up discovery after 15s
+#define SPLIT_DISCOVER_TIMEOUT_MS   15000   // Per-attempt WiFi scan timeout
+#define SPLIT_WIFI_RETRY_INTERVAL_MS 5000   // Time between WiFi AP scan retries
 
 // BLE
 #define BLE_DEVICE_NAME         "C3-Cascade"
 #define BLE_MANUFACTURER        "C3-Cascade"
 #define BLE_RECONNECT_TIMEOUT   5000    // ms to wait for reconnection after wake
+
+// Pairing shortcuts (master only)
+#define PAIRING_SHORTCUT_HOLD_MS    5000    // Hold time for pairing shortcuts
+#define PAIRING_MODE_TIMEOUT_MS    60000   // Auto-exit pairing mode after 60s
+
+// LED blink
+#define LED_BLINK_INTERVAL_MS      300     // LED toggle interval during pairing
 
 // ============================================================================
 // HID report settings

@@ -109,6 +109,26 @@ void get_mac_address(uint8_t mac[6]);
  */
 void system_reset();
 
+// ============================================================================
+// LED
+// ============================================================================
+
+/**
+ * @brief Initialize the onboard LED pin as output
+ * Safe to call even if no LED is available (no-op on boards without LED_PIN).
+ */
+void led_init();
+
+/**
+ * @brief Turn the onboard LED on
+ */
+void led_on();
+
+/**
+ * @brief Turn the onboard LED off
+ */
+void led_off();
+
 } // namespace hal
 
 #endif // C3CASCADE_HAL_H
