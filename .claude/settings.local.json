@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk git *)",
+      "Bash(rtk read *)",
+      "Bash(rtk pio *)",
+      "Bash(platformio run *)",
+      "Bash(rtk pip *)",
+      "Bash(rtk find *)",
+      "Bash(grep -v \".o$\")"
+    ]
+  }
+}

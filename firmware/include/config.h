@@ -135,7 +135,7 @@
 #define HID_REPORT_INTERVAL_MS  8       // Min time between HID reports (~125Hz)
 
 // Deep sleep
-#define DEEPSLEEP_TIMEOUT_MS    60000   // 60 seconds of inactivity → deep sleep
+#define DEEPSLEEP_TIMEOUT_MS    600000  // 10 minutes of inactivity → deep sleep
 
 // ESP-NOW
 #define ESPNOW_CHANNEL          1       // Wi-Fi channel for ESP-NOW

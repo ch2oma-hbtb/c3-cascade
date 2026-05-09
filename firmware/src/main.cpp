@@ -461,6 +461,32 @@ void loop() {
             slave = split_link_get_slave_matrix(0);
             #endif
 
+            // Determine active layer: FN held → layer 1
+            bool fn_held = false;
+            if (local != nullptr) {
+                for (int r = 0; r < MATRIX_ROWS && !fn_held; r++) {
+                    for (int c = 0; c < MATRIX_COLS && !fn_held; c++) {
+                        if (local->rows[r] & (1 << c)) {
+                            if (KEYMAP_LAYERS_PRIMARY[0][r][c] == HID_KEY_FN) {
+                                fn_held = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (slave != nullptr && !fn_held) {
+                for (int r = 0; r < MATRIX_ROWS && !fn_held; r++) {
+                    for (int c = 0; c < MATRIX_COLS && !fn_held; c++) {
+                        if (slave->rows[r] & (1 << c)) {
+                            if (KEYMAP_LAYERS_SECONDARY[0][r][c] == HID_KEY_FN) {
+                                fn_held = true;
+                            }
+                        }
+                    }
+                }
+            }
+            current_layer = fn_held ? 1 : 0;
+
             // Build combined HID report
             hid_keyboard_report_t report;
             build_hid_report(local, slave, &report);
